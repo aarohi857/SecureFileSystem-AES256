@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File Management System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="background">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="page active">
+        <div class="container">
+            <div class="login-card">
+                <div class="logo">
+                    <div class="lock-icon">🔒</div>
+                    <h1>Secure File Management</h1>
+                    <p class="subtitle">Enterprise-Grade Security</p>
+                </div>
+                
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="username" placeholder="Enter your username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password" placeholder="Enter your password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <span>Login</span>
+                        <span class="btn-icon">→</span>
+                    </button>
+                    
+                    <button type="button" class="btn btn-secondary" onclick="showRegistrationInfo()">
+                        <span>Registration Info</span>
+                        <span class="btn-icon">ℹ️</span>
+                    </button>
+                </form>
+                
+                <div class="features">
+                    <div class="feature">
+                        <span class="feature-icon">🔐</span>
+                        <span>AES-256 Encryption</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🛡️</span>
+                        <span>2FA Support</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">📊</span>
+                        <span>Activity Logs</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboardPage" class="page">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="nav-icon">🔒</span>
+                <span>Secure File System</span>
+            </div>
+            <div class="nav-user">
+                <span id="currentUser">Welcome!</span>
+                <button class="btn-logout" onclick="handleLogout()">Logout</button>
+            </div>
+        </nav>
+
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h2>Dashboard</h2>
+                <p class="dashboard-subtitle">All files are encrypted with AES-256</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📁</div>
+                    <div class="stat-info">
+                        <h3 id="totalFiles">0</h3>
+                        <p>Total Files</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔐</div>
+                    <div class="stat-info">
+                        <h3 id="encryptedFiles">0</h3>
+                        <p>Encrypted</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔗</div>
+                    <div class="stat-info">
+                        <h3 id="sharedFiles">0</h3>
+                        <p>Shared</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💾</div>
+                    <div class="stat-info">
+                        <h3 id="totalSize">0 KB</h3>
+                        <p>Storage Used</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions-grid">
+                <div class="action-card" onclick="handleUpload()">
+                    <div class="action-icon upload">📤</div>
+                    <h3>Upload File</h3>
+                    <p>Securely upload and encrypt your files</p>
+                </div>
+
+                <div class="action-card" onclick="handleViewFiles()">
+                    <div class="action-icon view">📁</div>
+                    <h3>My Files</h3>
+                    <p>View all your encrypted files</p>
+                </div>
+
+                <div class="action-card" onclick="handleDownload()">
+                    <div class="action-icon download">⬇️</div>
+                    <h3>Download File</h3>
+                    <p>Decrypt and download your files</p>
+                </div>
+
+                <div class="action-card" onclick="handleShare()">
+                    <div class="action-icon share">🔗</div>
+                    <h3>Share File</h3>
+                    <p>Share files with other users</p>
+                </div>
+
+                <div class="action-card" onclick="handleDelete()">
+                    <div class="action-icon delete">🗑️</div>
+                    <h3>Delete File</h3>
+                    <p>Permanently remove files</p>
+                </div>
+
+                <div class="action-card" onclick="handleMetadata()">
+                    <div class="action-icon info">ℹ️</div>
+                    <h3>File Info</h3>
+                    <p>View detailed file metadata</p>
+                </div>
+            </div>
+
+            <div class="security-notice">
+                <span class="notice-icon">🔒</span>
+                <span>All operations are logged for security audit</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Messages -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Message</h2>
+            <p id="modalMessage"></p>
+            <button class="btn btn-primary" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
