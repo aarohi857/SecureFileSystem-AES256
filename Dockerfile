@@ -1,23 +1,22 @@
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+
+# MinGW (Windows cross-compiler) aur Wine install karein
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    libssl-dev \
-    sed \
+    g++-mingw-w64-x86-64 \
+    wine64 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY . .
 
-# Sabhi files se windows.h aur localtime_s ko automatically Linux compatible banana
-RUN sed -i 's/#include <windows.h>/\/\/ #include <windows.h>/g' src/*.cpp src/*.h 2>/dev/null || true
-RUN sed -i 's/localtime_s(&\([^,]*\), &\([^)]*\));/localtime_r(\&\2, \&\1);/g' src/*.cpp src/*.h 2>/dev/null || true
-
-# Compile all source files
-RUN g++ -O3 src/*.cpp -lssl -lcrypto -o server
+# Windows exe build karein (Windows APIs wincrypt, ws2_32 automatically support honge)
+RUN x86_64-w64-mingw32-g++ -O3 src/*.cpp -lws2_32 -lcrypt32 -o server.exe
 
 EXPOSE 8080
 ENV PORT=8080
+ENV WINEDEBUG=-all
 
-CMD ["./server"]
+# Wine ke through Windows server execute karein
+CMD ["wine64", "./server.exe"]
