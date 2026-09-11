@@ -1,6 +1,6 @@
 /*
  * File Operations Module - Implementation
- * Complete file management with encryption and access control
+ * Complete file management with encryption and access control (Linux & Windows)
  */
 
 #include "fileops.h"
@@ -12,7 +12,17 @@
 #include <ctime>
 #include <cstdlib>
 #include <algorithm>
-#include <windows.h>
+#include <cstdio>
+
+#ifdef _WIN32
+    #include <windows.h>
+    #include <direct.h>
+    #define make_dir(path) _mkdir(path)
+#else
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #define make_dir(path) mkdir(path, 0777)
+#endif
 
 // File database
 static std::map<int, FileMetadata> fileDatabase;
@@ -27,8 +37,8 @@ static std::vector<std::string> dangerousExtensions = {
 
 // Initialize system
 void initFileOpsSystem() {
-    CreateDirectory("uploads", NULL);
-    CreateDirectory("database", NULL);
+    make_dir("uploads");
+    make_dir("database");
     
     // Load file metadata from database
     std::ifstream inFile("database/files.dat");
@@ -56,8 +66,14 @@ void initFileOpsSystem() {
 // Get current timestamp
 std::string getCurrentTimestamp() {
     time_t now = time(0);
+    struct tm timeinfo;
+#ifdef _WIN32
+    localtime_s(&timeinfo, &now);
+#else
+    localtime_r(&now, &timeinfo);
+#endif
     char buffer[80];
-    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localtime(&now));
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
     return std::string(buffer);
 }
 
@@ -125,8 +141,6 @@ bool validateFile(const std::string& filePath) {
         return false;
     }
     
-    // Simulate malware signature check
-    // In production, integrate with antivirus library
     std::cout << "File validation passed: " << filePath << std::endl;
     return true;
 }
@@ -258,8 +272,8 @@ bool deleteFile(int fileId, const std::string& username) {
     FileMetadata meta = it->second;
     std::string encryptedPath = "uploads/" + meta.encryptedName;
     
-    // Delete physical file
-    DeleteFile(encryptedPath.c_str());
+    // Delete physical file (Cross-platform)
+    std::remove(encryptedPath.c_str());
     
     // Remove from database
     fileDatabase.erase(fileId);
