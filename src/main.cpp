@@ -1,20 +1,35 @@
 /*
  * Secure File Management System - Web Version
- * Simple HTTP Server + Beautiful Web UI
- * Features: Authentication, Encryption, Access Control
+ * Cross-Platform HTTP Server + Web API (Linux & Windows)
  */
 
-#include <windows.h>
-#include <winsock2.h>
+#ifdef _WIN32
+    #include <windows.h>
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #pragma comment(lib, "ws2_32.lib")
+    typedef int socklen_t;
+#else
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+    #include <cstdlib>
+    #define SOCKET int
+    #define INVALID_SOCKET -1
+    #define SOCKET_ERROR -1
+    #define closesocket(s) close(s)
+#endif
+
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
 #include "auth.h"
 #include "fileops.h"
 #include "encryption.h"
-
-#pragma comment(lib, "ws2_32.lib")
 
 // Global variables
 std::string currentUser = "";
@@ -24,7 +39,6 @@ void startServer();
 void handleRequest(SOCKET clientSocket, const std::string& request);
 std::string readFile(const std::string& filename);
 void sendResponse(SOCKET client, int statusCode, const std::string& contentType, const std::string& body);
-void openBrowser();
 
 // Entry point
 int main() {
@@ -36,7 +50,6 @@ int main() {
     std::cout << "======================================" << std::endl;
     std::cout << "  Secure File Management System" << std::endl;
     std::cout << "======================================" << std::endl;
-    std::cout << "\nStarting server on port 8080...\n" << std::endl;
     
     // Start server
     startServer();
@@ -44,46 +57,55 @@ int main() {
     return 0;
 }
 
-// Open default browser
-void openBrowser() {
-    std::cout << "Opening browser..." << std::endl;
-    ShellExecute(NULL, "open", "http://localhost:8080", NULL, NULL, SW_SHOWNORMAL);
-}
-
 // Start HTTP Server
 void startServer() {
+#ifdef _WIN32
     WSADATA wsaData;
-    SOCKET serverSocket, clientSocket;
-    struct sockaddr_in serverAddr, clientAddr;
-    int clientAddrLen = sizeof(clientAddr);
-    
-    // Initialize Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
         std::cerr << "ERROR: WSAStartup failed" << std::endl;
-        system("pause");
         return;
     }
+#endif
+
+    SOCKET serverSocket, clientSocket;
+    struct sockaddr_in serverAddr, clientAddr;
+    socklen_t clientAddrLen = sizeof(clientAddr);
     
+    // Check Render dynamic PORT environment variable, fallback to 8080
+    int port = 8080;
+    const char* envPort = std::getenv("PORT");
+    if (envPort != nullptr) {
+        port = std::atoi(envPort);
+    }
+
+    std::cout << "\nStarting server on port " << port << "...\n" << std::endl;
+
     // Create socket
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == INVALID_SOCKET) {
         std::cerr << "ERROR: Socket creation failed" << std::endl;
+#ifdef _WIN32
         WSACleanup();
-        system("pause");
+#endif
         return;
     }
+
+    // Set SO_REUSEADDR
+    int opt = 1;
+    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt));
     
     // Setup server address
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(8080);
+    serverAddr.sin_port = htons(port);
     
     // Bind socket
     if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-        std::cerr << "ERROR: Bind failed (Port 8080 may be in use)" << std::endl;
+        std::cerr << "ERROR: Bind failed on port " << port << std::endl;
         closesocket(serverSocket);
+#ifdef _WIN32
         WSACleanup();
-        system("pause");
+#endif
         return;
     }
     
@@ -91,18 +113,14 @@ void startServer() {
     if (listen(serverSocket, 10) == SOCKET_ERROR) {
         std::cerr << "ERROR: Listen failed" << std::endl;
         closesocket(serverSocket);
+#ifdef _WIN32
         WSACleanup();
-        system("pause");
+#endif
         return;
     }
     
-    std::cout << "✓ Server started successfully!" << std::endl;
-    std::cout << "✓ Access URL: http://localhost:8080" << std::endl;
-    std::cout << "\n[Press Ctrl+C to stop server]\n" << std::endl;
-    
-    // Open browser after 1 second
-    Sleep(1000);
-    openBrowser();
+    std::cout << "✓ Server started successfully on port " << port << "!" << std::endl;
+    std::cout << "\n[Server running...]\n" << std::endl;
     
     // Accept connections loop
     while (true) {
@@ -125,7 +143,9 @@ void startServer() {
     }
     
     closesocket(serverSocket);
+#ifdef _WIN32
     WSACleanup();
+#endif
 }
 
 // Handle HTTP request
@@ -142,7 +162,7 @@ void handleRequest(SOCKET clientSocket, const std::string& request) {
         if (!html.empty()) {
             sendResponse(clientSocket, 200, "text/html", html);
         } else {
-            std::string error = "<h1>Error: index.html not found</h1><p>Make sure index.html is in the same folder as the .exe</p>";
+            std::string error = "<h1>Error: index.html not found</h1>";
             sendResponse(clientSocket, 404, "text/html", error);
         }
     }
