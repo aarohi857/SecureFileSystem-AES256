@@ -11,7 +11,12 @@ NotificationManager::NotificationManager() {
 std::string NotificationManager::getCurrentTimestamp() {
     time_t now = time(0);
     struct tm timeinfo;
+
+#ifdef _WIN32
     localtime_s(&timeinfo, &now);
+#else
+    localtime_r(&now, &timeinfo);
+#endif
     
     std::stringstream ss;
     ss << std::put_time(&timeinfo, "%Y-%m-%d %H:%M:%S");
